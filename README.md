@@ -3,6 +3,9 @@
 Веб-сайт кафедры АНО ВО «РосНОУ»: новости, преподаватели, дисциплины, документы,
 контактная информация и панель управления содержимым.
 
+**Демонстрация:** <https://aanatoliygalkin.github.io/kafedra-site/>
+(демо-режим: данные хранятся в браузере, вход в панель — `admin@iseu.local` / `admin123`)
+
 ## Технологии
 
 | Что | Версия |
@@ -75,30 +78,33 @@ kafedra-site/
 
 ## Публикация на GitHub Pages
 
-1. Создайте на GitHub **пустой** репозиторий (без README), например `kafedra-site`.
-2. Откройте папку `kafedra-site` в VS Code → раздел Source Control →
-   **Initialize Repository** → Commit → **Publish Branch** → выберите созданный
-   репозиторий. Либо из терминала:
-   ```powershell
-   git init -b main
-   git add .
-   git commit -m "Сайт кафедры"
-   git remote add origin https://github.com/<логин>/kafedra-site.git
-   git push -u origin main
-   ```
-3. В репозитории: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-4. После push откройте вкладку **Actions** — сборка займёт 1–2 минуты.
-5. Сайт будет доступен по адресу `https://<логин>.github.io/<репозиторий>/`.
+Сайт уже опубликован: репозиторий <https://github.com/aanatoliygalkin/kafedra-site>,
+страница — <https://aanatoliygalkin.github.io/kafedra-site/>. Источник сборки в
+настройках Pages: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+Обновление сайта — обычный push в ветку `main`:
+
+```powershell
+git add .
+git commit -m "Правка текста страницы"
+git push
+```
+
+Через 1–2 минуты сборка во вкладке **Actions** завершится и сайт обновится.
+При каждом push workflow собирает проект (`npm ci` → `npm run build`) и публикует
+каталог `out`.
 
 Подкаталог `/имя-репозитория/` подставляется автоматически: workflow передаёт его
 в сборку через `NEXT_PUBLIC_BASE_PATH`, поэтому переименование репозитория ничего
 не ломает. Файл `public/.nojekyll` уже добавлен — без него GitHub Pages скрывает
 каталог `_next` со стилями и скриптами.
 
-Необязательно: после первого `npm install` закоммитьте появившийся
-`package-lock.json` и замените в workflow `npm install` на `npm ci` — сборка станет
-воспроизводимой и немного быстрее. В этом репозитории так уже сделано:
-`package-lock.json` закоммичен, workflow использует `npm ci`.
+Если понадобится поднять сайт в новом репозитории: создайте на GitHub пустой
+репозиторий, выполните `git remote set-url origin <адрес>`, `git push -u origin main`
+и выберите источник «GitHub Actions» в настройках Pages.
+
+`package-lock.json` закоммичен, workflow использует `npm ci` — сборка
+воспроизводимая.
 
 ## Проверка перед защитой
 
