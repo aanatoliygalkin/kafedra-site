@@ -1,0 +1,6 @@
+# Единые окончания строк и нормализация текстовых файлов.
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary

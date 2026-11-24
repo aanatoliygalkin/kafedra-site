@@ -41,7 +41,8 @@ jobs:
           node-version: 20
 
       - name: Установка зависимостей
-        run: npm install
+        # package-lock.json закоммичен, поэтому сборка воспроизводима
+        run: npm ci
 
       - name: Сборка статического сайта
         run: npm run build
