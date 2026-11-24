@@ -1,0 +1,19 @@
+# зависимости
+node_modules/
+.pnpm-store/
+
+# сборка
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# переменные окружения
+.env
+.env.local
+.env.*.local
+
+# служебные файлы
+.DS_Store
+Thumbs.db
+*.log

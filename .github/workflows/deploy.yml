@@ -1,0 +1,68 @@
+# Сборка статического сайта и публикация на GitHub Pages.
+#
+# Как это работает:
+#   1. при каждом push в ветку main GitHub запускает этот файл;
+#   2. проект собирается командой `npm run build` в статические файлы (каталог out);
+#   3. содержимое каталога out публикуется на GitHub Pages.
+#
+# Адрес страницы содержит имя репозитория (/имя-репозитория/), поэтому оно
+# передаётся в сборку через NEXT_PUBLIC_BASE_PATH — его подставляет сама
+# GitHub Actions, менять ничего не нужно.
+#
+# В настройках репозитория должно быть выбрано:
+#   Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+name: Деплой на GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Получение кода
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Установка зависимостей
+        run: npm install
+
+      - name: Сборка статического сайта
+        run: npm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
+
+      - name: Подготовка Pages
+        uses: actions/configure-pages@v5
+
+      - name: Загрузка артефакта
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Публикация
+        id: deployment
+        uses: actions/deploy-pages@v4
