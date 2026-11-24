@@ -58,8 +58,8 @@ export default function HomePage() {
             <span>год основания кафедры</span>
           </div>
           <div className="fact">
-            <b>18</b>
-            <span>преподавателей, из них 6 кандидатов наук</span>
+            <b>8</b>
+            <span>преподавателей, из них 4 кандидата наук</span>
           </div>
           <div className="fact">
             <b>4</b>
@@ -138,7 +138,7 @@ export default function HomePage() {
               : null}
             {!documents ? <div className="skeleton" style={{ height: 44 }} /> : null}
             <Link href="/teachers/">
-              Состав кафедры <span>18 чел.</span>
+              Состав кафедры <span>8 чел.</span>
             </Link>
           </div>
         </section>
