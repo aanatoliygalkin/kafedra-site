@@ -1339,8 +1339,13 @@ table.tbl tr:hover td {
     font-size: 20px;
   }
 
-  .topbar .wrap span.hide-sm {
-    display: none;
+  /* на узком экране строки верхней полосы переносятся друг под друга,
+     иначе длинное название института обрезается */
+  .topbar .wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    font-size: 11px;
   }
 
   .site-footer .wrap {
