@@ -27,6 +27,10 @@ export interface News {
   published: boolean
   published_at: string
   created_at: string
+  /** Автор записи. Ссылка обнуляется при удалении профиля, сама новость остаётся. */
+  created_by?: string | null
+  /** Имя автора, подставляется при выводе списка в панели. */
+  author_name?: string
 }
 
 export interface Teacher {
@@ -85,6 +89,8 @@ export type EntityName = 'news' | 'teachers' | 'courses' | 'documents' | 'pages'
 
 export interface Session {
   access_token: string
+  /** Идентификатор профиля: используется для авторства записей. */
+  id?: string
   email: string
   full_name: string
   role: Role

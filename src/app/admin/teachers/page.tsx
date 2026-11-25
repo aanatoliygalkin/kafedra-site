@@ -2,10 +2,14 @@
 
 import { DataTable } from '@/components/admin/DataTable'
 import { useEntities } from '@/components/admin/useEntities'
+import { useAuth } from '@/lib/auth'
+import { adminOnlyText, canEdit } from '@/lib/permissions'
 import type { Teacher } from '@/lib/types'
 
 export default function AdminTeachersPage() {
+  const { session } = useAuth()
   const { items, error, busy, remove } = useEntities<Teacher>('teachers')
+  const allowed = canEdit('teachers', session?.role)
 
   return (
     <DataTable<Teacher>
@@ -16,6 +20,9 @@ export default function AdminTeachersPage() {
       error={error}
       busy={busy}
       onDelete={remove}
+      canCreate={allowed}
+      canEdit={allowed}
+      note={allowed ? undefined : adminOnlyText('Состав кафедры')}
       emptyText="Список преподавателей пуст."
       searchFields={(row) => `${row.full_name} ${row.position} ${row.email}`}
       columns={[

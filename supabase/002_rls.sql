@@ -31,9 +31,9 @@ $$;
 
 alter table public.profiles enable row level security;
 
-create policy "profiles: чтение своего профиля"
+create policy "profiles: чтение профилей"
   on public.profiles for select
-  using (auth.uid() = id or public.current_role_name() = 'admin');
+  using (auth.uid() = id or public.is_staff());
 
 create policy "profiles: изменение своего имени"
   on public.profiles for update
@@ -78,9 +78,10 @@ alter table public.pages enable row level security;
 
 create policy "teachers: чтение всем"
   on public.teachers for select using (true);
-create policy "teachers: запись сотрудникам"
+create policy "teachers: запись администратором"
   on public.teachers for all to authenticated
-  using (public.is_staff()) with check (public.is_staff());
+  using (public.current_role_name() = 'admin')
+  with check (public.current_role_name() = 'admin');
 
 create policy "courses: чтение всем"
   on public.courses for select using (true);

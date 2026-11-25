@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
 import { TextSkeleton } from '@/components/Skeleton'
+import { useAuth } from '@/lib/auth'
 import { deleteEntity, getEntity, listTeachers, saveEntity } from '@/lib/data'
 import { slugify } from '@/lib/format'
+import { canEdit } from '@/lib/permissions'
 import type { EntityName, Teacher } from '@/lib/types'
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'date' | 'select' | 'checkbox' | 'teacher'
@@ -214,8 +216,10 @@ function toPayload(type: EntityName, form: FormState): Record<string, unknown> {
 export function EditView() {
   const params = useSearchParams()
   const router = useRouter()
+  const { session } = useAuth()
   const type = (params.get('type') ?? 'news') as EntityName
   const id = params.get('id')
+  const allowed = canEdit(type, session?.role)
 
   const [form, setForm] = useState<FormState | null>(id ? null : defaults(type))
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -268,7 +272,11 @@ export function EditView() {
     setSaving(true)
     setError(null)
     try {
-      await saveEntity({ type, id: id ?? null, values: toPayload(type, form) })
+      const values = toPayload(type, form)
+      if (type === 'news' && !id && session?.id) {
+        values.created_by = session.id
+      }
+      await saveEntity({ type, id: id ?? null, values })
       router.push(LIST_HREF[type] ?? '/admin/')
     } catch (reason) {
       setError((reason as Error).message)
@@ -288,6 +296,15 @@ export function EditView() {
       setError((reason as Error).message)
       setSaving(false)
     }
+  }
+
+  if (!allowed) {
+    return (
+      <div className="empty">
+        Недостаточно прав: этот раздел изменяет только администратор.{' '}
+        <Link href={LIST_HREF[type] ?? '/admin/'}>Вернуться к списку</Link>.
+      </div>
+    )
   }
 
   if (!form) {

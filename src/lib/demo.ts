@@ -5,6 +5,8 @@
  * публикация на GitHub Pages), данные читаются из модуля demo-data и
  * сохраняются в localStorage браузера. Панель управления в этом режиме
  * работает так же, как с базой: изменения сразу видны на страницах сайта.
+ * Учётные записи сотрудников хранятся отдельным ключом и могут пополняться
+ * из раздела «Пользователи».
  */
 
 import {
@@ -13,6 +15,7 @@ import {
   demoNews,
   demoPages,
   demoTeachers,
+  demoUsers,
 } from './demo-data'
 import type {
   Course,
@@ -21,10 +24,13 @@ import type {
   ListOptions,
   News,
   Page,
+  Profile,
+  Role,
   Teacher,
 } from './types'
 
 const STORAGE_KEY = 'kafedra.demo.v1'
+const USERS_KEY = 'kafedra.demo.users.v1'
 
 interface DemoState {
   news: News[]
@@ -34,13 +40,30 @@ interface DemoState {
   pages: Page[]
 }
 
+export interface StoredUser extends Profile {
+  password: string
+}
+
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T
 }
 
+function seedUsers(): StoredUser[] {
+  return demoUsers.map((user) => ({ ...user }))
+}
+
+/** Новости в демонстрационном наборе не хранят автора: подставляем по порядку. */
+function seedNews(): News[] {
+  const authors = demoUsers.map((user) => user.id)
+  return demoNews.map((item, index) => ({
+    ...clone(item),
+    created_by: item.created_by ?? authors[index % authors.length],
+  }))
+}
+
 function seed(): DemoState {
   return {
-    news: clone(demoNews),
+    news: seedNews(),
     teachers: clone(demoTeachers),
     courses: clone(demoCourses),
     documents: clone(demoDocuments),
@@ -93,6 +116,96 @@ export function saveDemoState(state: DemoState): void {
 /** Сброс демо-данных к исходному состоянию. */
 export function resetDemoState(): void {
   saveDemoState(seed())
+}
+
+/* ------------------------------------------------------------ учётные записи */
+
+function isUsers(value: unknown): value is StoredUser[] {
+  return (
+    Array.isArray(value) &&
+    value.every((user) => user && typeof user === 'object' && 'email' in user && 'role' in user)
+  )
+}
+
+export function loadDemoUsers(): StoredUser[] {
+  if (typeof window === 'undefined') return seedUsers()
+  try {
+    const raw = window.localStorage.getItem(USERS_KEY)
+    if (!raw) {
+      const initial = seedUsers()
+      saveDemoUsers(initial)
+      return initial
+    }
+    const parsed: unknown = JSON.parse(raw)
+    if (!isUsers(parsed)) {
+      const initial = seedUsers()
+      saveDemoUsers(initial)
+      return initial
+    }
+    return parsed
+  } catch {
+    return seedUsers()
+  }
+}
+
+export function saveDemoUsers(users: StoredUser[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(USERS_KEY, JSON.stringify(users))
+  } catch {
+    /* см. saveDemoState */
+  }
+}
+
+export function resetDemoUsers(): void {
+  saveDemoUsers(seedUsers())
+}
+
+/** Список профилей без паролей. */
+export function demoProfiles(): Profile[] {
+  return loadDemoUsers().map((user) => ({
+    id: user.id,
+    email: user.email,
+    full_name: user.full_name,
+    role: user.role,
+  }))
+}
+
+export function demoCreateProfile(input: {
+  email: string
+  full_name: string
+  password: string
+  role: Role
+}): Profile {
+  const users = loadDemoUsers()
+  const email = input.email.trim().toLowerCase()
+  if (users.some((user) => user.email.toLowerCase() === email)) {
+    throw new Error('Учётная запись с такой почтой уже существует')
+  }
+  const created: StoredUser = {
+    id: createId(),
+    email,
+    full_name: input.full_name.trim(),
+    role: input.role,
+    password: input.password,
+  }
+  saveDemoUsers([...users, created])
+  return { id: created.id, email: created.email, full_name: created.full_name, role: created.role }
+}
+
+export function demoUpdateProfile(id: string, patch: Partial<Profile>): Profile {
+  const users = loadDemoUsers()
+  const index = users.findIndex((user) => user.id === id)
+  if (index < 0) throw new Error('Учётная запись не найдена')
+  const updated: StoredUser = { ...users[index], ...patch }
+  users[index] = updated
+  saveDemoUsers(users)
+  return { id: updated.id, email: updated.email, full_name: updated.full_name, role: updated.role }
+}
+
+export function demoDeleteProfile(id: string): void {
+  const users = loadDemoUsers()
+  saveDemoUsers(users.filter((user) => user.id !== id))
 }
 
 function compare<T>(a: T, b: T): number {

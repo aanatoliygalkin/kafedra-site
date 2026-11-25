@@ -8,11 +8,15 @@
 
 import {
   demoCounts,
+  demoCreateProfile,
+  demoDeleteProfile,
   demoFind,
   demoFindBySlug,
   demoList,
+  demoProfiles,
   demoRemove,
   demoSave,
+  demoUpdateProfile,
 } from './demo'
 import { sessionToken } from './session'
 import {
@@ -31,6 +35,8 @@ import type {
   ListOptions,
   News,
   Page,
+  Profile,
+  Role,
   Teacher,
 } from './types'
 
@@ -180,8 +186,61 @@ export async function deleteEntity(type: EntityName, id: string): Promise<void> 
   await restDelete(TABLE[type], id, sessionToken())
 }
 
-/* ------------------------------------------------------------ статистика */
+/* ---------------------------------------------------- учётные записи */
 
+/** Учётные записи сотрудников. Читают сотрудники и администратор, изменяет администратор. */
+export async function listProfiles(): Promise<Profile[]> {
+  if (DEMO_MODE) return demoProfiles()
+  const { items } = await restList<Profile>(
+    'profiles',
+    {},
+    'full_name.asc',
+    false,
+    sessionToken()
+  )
+  return items
+}
+
+/** Имена авторов записей: идентификатор профиля → ФИО. */
+export async function listAuthorNames(): Promise<Map<string, string>> {
+  try {
+    const profiles = await listProfiles()
+    return new Map(profiles.map((profile) => [profile.id, profile.full_name]))
+  } catch {
+    return new Map()
+  }
+}
+
+export async function updateProfileRole(id: string, role: Role): Promise<void> {
+  if (DEMO_MODE) {
+    demoUpdateProfile(id, { role })
+    return
+  }
+  await restUpdate('profiles', id, { role }, sessionToken())
+}
+
+export async function createProfile(input: {
+  email: string
+  full_name: string
+  password: string
+  role: Role
+}): Promise<void> {
+  if (DEMO_MODE) {
+    demoCreateProfile(input)
+    return
+  }
+  throw new Error('В рабочей базе учётные записи создаются в панели Supabase')
+}
+
+export async function deleteProfile(id: string): Promise<void> {
+  if (DEMO_MODE) {
+    demoDeleteProfile(id)
+    return
+  }
+  throw new Error('Удаление учётной записи выполняется в панели Supabase')
+}
+
+/* ------------------------------------------------------------ статистика */
 export interface Counts {
   news: number
   teachers: number

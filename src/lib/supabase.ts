@@ -214,6 +214,7 @@ export async function signInWithPassword(
   const profile = await fetchProfile(data.access_token, data.user.id).catch(() => null)
   return {
     access_token: data.access_token,
+    id: profile?.id ?? data.user.id,
     email: profile?.email ?? data.user.email ?? email,
     full_name: profile?.full_name ?? email,
     role: profile?.role ?? 'staff',

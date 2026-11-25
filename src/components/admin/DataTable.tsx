@@ -22,6 +22,12 @@ export interface DataTableProps<T extends { id: string }> {
   searchFields: (row: T) => string
   onDelete: (id: string) => void
   emptyText: string
+  /** Может ли текущий пользователь добавлять записи. */
+  canCreate?: boolean
+  /** Может ли текущий пользователь изменять и удалять записи. */
+  canEdit?: boolean
+  /** Пояснение, если действия ограничены ролью. */
+  note?: string
 }
 
 /** Таблица раздела панели управления с поиском и действиями. */
@@ -36,6 +42,9 @@ export function DataTable<T extends { id: string }>({
   searchFields,
   onDelete,
   emptyText,
+  canCreate = true,
+  canEdit = true,
+  note,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('')
 
@@ -59,11 +68,15 @@ export function DataTable<T extends { id: string }>({
             onChange={(event) => setSearch(event.target.value)}
             aria-label="Поиск в таблице"
           />
-          <Link className="btn btn-solid" href={createHref}>
-            + Добавить
-          </Link>
+          {canCreate ? (
+            <Link className="btn btn-solid" href={createHref}>
+              + Добавить
+            </Link>
+          ) : null}
         </div>
       </div>
+
+      {note ? <div className="admin-note">{note}</div> : null}
 
       {error ? <div className="alert error">{error}</div> : null}
       {!rows ? <RowsSkeleton count={5} /> : null}
@@ -80,7 +93,7 @@ export function DataTable<T extends { id: string }>({
                     {column.title}
                   </th>
                 ))}
-                <th style={{ width: 150 }}>Действия</th>
+                {canEdit ? <th style={{ width: 150 }}>Действия</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -89,24 +102,26 @@ export function DataTable<T extends { id: string }>({
                   {columns.map((column) => (
                     <td key={column.title}>{column.render(row)}</td>
                   ))}
-                  <td>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      <Link className="btn btn-sm" href={editHref(row.id)}>
-                        Изменить
-                      </Link>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-danger"
-                        onClick={() => {
-                          if (window.confirm('Удалить запись? Действие нельзя отменить.')) {
-                            onDelete(row.id)
-                          }
-                        }}
-                      >
-                        Удалить
-                      </button>
-                    </div>
-                  </td>
+                  {canEdit ? (
+                    <td>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <Link className="btn btn-sm" href={editHref(row.id)}>
+                          Изменить
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-danger"
+                          onClick={() => {
+                            if (window.confirm('Удалить запись? Действие нельзя отменить.')) {
+                              onDelete(row.id)
+                            }
+                          }}
+                        >
+                          Удалить
+                        </button>
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
